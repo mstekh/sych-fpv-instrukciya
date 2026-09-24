@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SYCH FPV SCANNER — інструкція до бета-тесту</title>
+<meta name="description" content="Приймач аналогового відео з FPV-дронів на HackRF. Інструкція до закритої бета-версії 0.3.0: перший запуск, підсилення, режими, мережевий перегляд і що надсилати назад.">
+<link rel="icon" href="assets/logo-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Barlow:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B0B0C; --panel:#131417; --line:#3A3D42; --line-soft:#212327;
+  --text:#E6E2DA; --dim:#8D8F94; --amber:#E8A33D; --bad:#E8585D; --good:#4EE39A;
+  --w:1080px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth; scroll-padding-top:74px}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font:400 17px/1.65 Barlow,"Segoe UI",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.eyebrow,.tag,.btn{font-family:Rajdhani,"Segoe UI",system-ui,sans-serif}
+code,pre,.mono{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace}
+a{color:var(--amber)}
+
+/* ---------- шапка ---------- */
+header{
+  position:sticky; top:0; z-index:20; background:rgba(11,11,12,.93);
+  backdrop-filter:blur(8px); border-bottom:1px solid var(--line-soft);
+  padding-top:env(safe-area-inset-top,0px);
+}
+.bar{max-width:var(--w); margin:0 auto; padding:10px 20px;
+  display:flex; align-items:center; gap:14px}
+.bar img{width:34px; height:34px; border-radius:5px; flex:none}
+.brand{font-weight:700; font-size:19px; letter-spacing:.06em; white-space:nowrap}
+.badge{font:600 11px/1 Rajdhani,sans-serif; letter-spacing:.12em;
+  color:var(--amber); border:1px solid var(--amber); border-radius:3px;
+  padding:4px 7px; white-space:nowrap}
+nav{margin-left:auto; display:flex; gap:18px; align-items:center; flex-wrap:wrap}
+nav a{color:var(--dim); text-decoration:none; font-size:14px; letter-spacing:.04em}
+nav a:hover{color:var(--text)}
+nav a.tg{color:var(--bg); background:var(--amber); padding:7px 13px;
+  border-radius:4px; font-weight:600}
+@media(max-width:860px){ nav .hide{display:none} }
+
+/* ---------- каркас ---------- */
+main{max-width:var(--w); margin:0 auto; padding:0 20px 80px}
+section{padding:54px 0; border-bottom:1px solid var(--line-soft)}
+section:last-of-type{border-bottom:0}
+.eyebrow{font-size:12px; font-weight:600; letter-spacing:.2em; color:var(--dim);
+  text-transform:uppercase; margin:0 0 10px}
+h2{font-size:clamp(25px,3.6vw,34px); line-height:1.2; margin:0 0 20px;
+  font-weight:700; text-wrap:balance; max-width:22ch}
+h2.wide{max-width:32ch}
+p{margin:0 0 16px; max-width:66ch}
+ul{margin:0 0 16px; padding-left:20px; max-width:66ch}
+li{margin:0 0 8px}
+.lead{font-size:19px; color:var(--dim); max-width:60ch}
+
+/* ---------- герой ---------- */
+.hero{padding:68px 0 54px; border-bottom:1px solid var(--line-soft)}
+.hero h1{font-size:clamp(38px,7vw,68px); line-height:1; margin:0 0 16px;
+  font-weight:700; letter-spacing:.01em}
+.need{display:flex; gap:10px; flex-wrap:wrap; margin:26px 0 0; padding:0; list-style:none}
+.need li{margin:0; border:1px solid var(--line); border-radius:4px;
+  padding:9px 13px; font-size:14px; color:var(--dim)}
+.need b{color:var(--text); font-weight:500}
+
+/* ---------- плашки ---------- */
+.warn{border-left:3px solid var(--amber); background:#1a1408;
+  padding:16px 18px; margin:22px 0; max-width:66ch}
+.warn p{margin:0}
+.warn b{color:var(--amber)}
+pre{background:#0d0e10; border:1px solid var(--line-soft); border-radius:5px;
+  padding:15px 17px; overflow-x:auto; font-size:14px; line-height:1.85;
+  color:var(--text); margin:0 0 18px; max-width:66ch}
+.state{color:var(--amber)}
+
+/* ---------- картки ---------- */
+.cards{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(255px,1fr))}
+.card{background:var(--panel); border:1px solid var(--line-soft);
+  border-radius:6px; padding:18px 19px}
+.card h3{margin:0 0 9px; font-size:16px; letter-spacing:.09em; color:var(--amber);
+  font-weight:600}
+.card p{margin:0; font-size:15.5px; color:var(--dim); max-width:none}
+.card p+p{margin-top:10px}
+
+/* ---------- помилки ---------- */
+.err{margin:0 0 26px; max-width:72ch}
+.err code{display:block; background:#0d0e10; border-left:3px solid var(--bad);
+  padding:11px 14px; font-size:14px; color:var(--text); overflow-x:auto;
+  border-radius:0 4px 4px 0}
+.err p{margin:11px 0 0; color:var(--dim)}
+
+/* ---------- нумеровані кроки ---------- */
+ol.steps{list-style:none; counter-reset:s; padding:0; margin:0; max-width:66ch}
+ol.steps li{counter-increment:s; position:relative; padding-left:44px; margin:0 0 18px}
+ol.steps li::before{content:counter(s,decimal-leading-zero);
+  position:absolute; left:0; top:-1px; font:700 18px Rajdhani,sans-serif;
+  color:var(--amber)}
+
+/* ---------- знімки ---------- */
+figure{margin:22px 0; border:1px solid var(--line-soft); border-radius:6px;
+  background:var(--panel); overflow:hidden}
+figure img{display:block; width:100%; height:auto}
+figure.pending{padding:34px 20px; text-align:center; color:var(--dim);
+  border-style:dashed; font-size:14px}
+figcaption{padding:11px 15px; font-size:13.5px; color:var(--dim);
+  border-top:1px solid var(--line-soft)}
+.shots{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.shots figure{margin:0}
+
+/* ---------- заклик і підвал ---------- */
+.cta{text-align:center; padding:64px 0}
+.cta h2{margin:0 auto 18px; max-width:24ch}
+.btn{display:inline-block; background:var(--amber); color:var(--bg);
+  padding:15px 34px; border-radius:5px; text-decoration:none;
+  font-weight:700; font-size:18px; letter-spacing:.06em}
+footer{border-top:1px solid var(--line-soft); padding:34px 20px 56px;
+  padding-bottom:calc(56px + env(safe-area-inset-bottom,0px))}
+.foot{max-width:var(--w); margin:0 auto; display:flex; gap:18px;
+  align-items:center; flex-wrap:wrap; color:var(--dim); font-size:14px}
+.foot img{width:38px; height:38px; border-radius:5px; opacity:.75}
+.foot .sig{font-style:italic}
+.foot a{margin-left:auto}
+@media(max-width:600px){ .foot a{margin-left:0} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <img src="assets/logo-512.png" alt="">
+    <span class="brand">SYCH FPV SCANNER</span>
+    <span class="badge">БЕТА 0.3.0</span>
+    <nav>
+      <a class="hide" href="#start">Початок</a>
+      <a class="hide" href="#gain">Підсилення</a>
+      <a class="hide" href="#modes">Режими</a>
+      <a class="hide" href="#net">Мережа</a>
+      <a class="hide" href="#errors">Помилки</a>
+      <a class="tg" href="https://t.me/mammoth_forge">Телеграм-група</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<section class="hero">
+  <p class="eyebrow">Приймач аналогового відео · HackRF</p>
+  <h1>SYCH FPV SCANNER</h1>
+  <p class="lead">Застосунок для Android, який приймає аналогове відео з камер
+  FPV-дронів. Плата HackRF під'єднується до телефона кабелем, а застосунок
+  показує картинку з ефіру, спектр діапазону і сам шукає, де відео є.</p>
+  <p class="lead">Це закрита бета-версія. Збірка йде вузькому колу людей, які
+  перевіряють її в полі.</p>
+  <ul class="need">
+    <li><b>Android 7</b> або новіший</li>
+    <li><b>HackRF One</b>, клони або плата під PortaPack</li>
+    <li><b>Кабель USB-C</b> для даних</li>
+  </ul>
+</section>
+
+<section id="start">
+  <p class="eyebrow">Апаратний бар'єр</p>
+  <h2>Половина невдалих запусків — це кабель, а не застосунок</h2>
+  <ul>
+    <li>Android 7 або новіший.</li>
+    <li>HackRF One. Застосунок працює і з клонами, і з платою під PortaPack.</li>
+    <li>Кабель <b>для даних</b>: USB-C↔USB-C, або USB-C↔micro-USB для старіших плат.</li>
+    <li>Антена на потрібний діапазон.</li>
+  </ul>
+  <div class="warn">
+    <p><b>Кабель лише для заряджання не підійде</b> — у ньому немає ліній даних.
+    Плата в такому разі просто не з'явиться на шині, і виглядає це точнісінько
+    як «застосунок нічого не знаходить».</p>
+  </div>
+  <p>Плата живиться від телефона. На тривалій роботі телефон помітно сідає —
+  це нормально й цього не обійти.</p>
+</section>
+
+<section>
+  <p class="eyebrow">Перший запуск</p>
+  <h2>Три кроки до першої картинки</h2>
+  <ol class="steps">
+    <li>Під'єднай плату. Застосунок знайде її сам. Якщо вона в режимі PortaPack,
+    застосунок сам поверне її в режим радіо — це триває кілька секунд, тож
+    зачекай, перш ніж щось перетикати.</li>
+    <li>Натисни <b>ПУСК</b> і відкрий вкладку <b>ПОШУК ВІДЕО</b>. Буде жива
+    картинка з тієї частоти, що стоїть у полі частоти. Канали внизу
+    перемикаються одним дотиком.</li>
+    <li>Вистав підсилення — <a href="#gain">наступний розділ</a>. Зроби це до
+    того, як шукати щось усерйоз: неправильне підсилення дає порожній екран,
+    на якому нічого не видно навіть тоді, коли передавач працює за два метри.</li>
+  </ol>
+  <figure><img src="shot-monitor.png" alt="Вкладка ПОШУК ВІДЕО">
+    <figcaption>ПОШУК ВІДЕО. Плату не під'єднано, тож картинки немає — рядок
+    угорі так і каже: «USB: плати не видно».</figcaption></figure>
+</section>
+
+<section id="gain">
+  <p class="eyebrow">Підсилення</p>
+  <h2 class="wide">Два числа в одному рядку, і плутати їх — найдорожча помилка</h2>
+  <p>Унизу екрана є рядок АЦП. У ньому два різні числа, і вони означають різне.</p>
+<pre><span class="state">АЦП   0% · рівень   4 зі 127</span>   ← замало, тракт недовантажений
+<span class="state">АЦП   0% · рівень  60 зі 127</span>   ← добре
+<span class="state">АЦП  85% · рівень 120 зі 127</span>   ← забагато, сигнал обрізається</pre>
+  <p><b>Відсоток</b> — це обрізання. Його має бути нуль.
+  <b>Рівень</b> — це наскільки повно завантажений тракт. Він має бути
+  близько 60.</p>
+  <p>Порядок дій: піднімай <b>VGA</b>, доки відсоток не зрушить з нуля. Тоді
+  опусти на два кроки назад — щоб вийти з обрізання й лишити запас. У підсумку
+  відсоток знову нуль, а рівень десь коло шістдесяти.</p>
+  <p>Крутити треба в обидва боки. Рівень <span class="mono">0 зі 127</span> —
+  такий самий провал, як і перевантаження: у першому випадку міряти нема чого,
+  у другому міряти вже неможливо.</p>
+  <div class="warn">
+    <p>Неправильно виставлене підсилення виглядає точно як несправний
+    застосунок. Це <b>найчастіша причина скарг «нічого не працює»</b> серед
+    тих, де кабель у порядку.</p>
+  </div>
+  <div class="shots">
+    <figure class="pending"><figcaption>Знімок: відкрита панель ПІДСИЛЕННЯ</figcaption></figure>
+    <figure class="pending"><figcaption>Знімок: три стани рядка АЦП</figcaption></figure>
+  </div>
+</section>
+
+<section id="modes">
+  <p class="eyebrow">Режими</p>
+  <h2>Один приймач і п'ять способів дивитися на ефір</h2>
+  <div class="cards">
+    <div class="card">
+      <h3>ПОШУК ВІДЕО</h3>
+      <p>Жива картинка з однієї частоти. Канали внизу можна перемикати одним
+      дотиком.</p>
+    </div>
+    <div class="card">
+      <h3>СВІП ДІАПАЗОНУ</h3>
+      <p>Спектр і водоспад усього діапазону. Видно, на яких частотах взагалі
+      щось є, перш ніж ставати на якусь із них.</p>
+    </div>
+    <div class="card">
+      <h3>АВТОПОШУК ВІДЕО</h3>
+      <p>Шукає у фоні й показує кадри зі знайдених каналів, гортаючи їх сам.
+      Дотик до великого напису з частотою над кадрами перемикає приймач на цей
+      канал.</p>
+      <p>Підтверджений канал лишається в списку до двох хвилин, навіть коли
+      сигнал просів, і підписаний
+      <span class="mono">УТРИМУЄТЬСЯ 1:20 · перевірок без відповіді 2/5</span>.
+      Поки він тримається, застосунок перевіряє його щопроходу попри рівень.
+      П'ять перевірок без відповіді або дві хвилини — і канал забувається.</p>
+    </div>
+    <div class="card">
+      <h3>УЛЬТРА СКАН</h3>
+      <p>Перевіряє все, що піднялось над шумом, а не лише те, що схоже на відео
+      за шириною. Прохід стає довшим у рази — і це свідомо: так знаходиться
+      камера, яку звичайний відбір відкидає за формою сигналу.</p>
+    </div>
+    <div class="card">
+      <h3>КАЛІБРУВАТИ</h3>
+      <p>Десять хвилин, протягом яких плата, антена й телефон стоять нерухомо.
+      Приймач за цей час міряє підлогу шуму саме цього місця. Рух за час
+      калібрування міняє те, що міряється, тож вимір виходить ні про що.</p>
+      <p>Після калібрування слабкі сигнали видно помітно краще.</p>
+    </div>
+  </div>
+  <div class="shots">
+    <figure><img src="shot-sweep.png" alt="Вкладка СВІП ДІАПАЗОНУ">
+      <figcaption>СВІП ДІАПАЗОНУ. Знімок без плати, тому спектр порожній —
+      видно розкладку й керування, а не реальний ефір.</figcaption></figure>
+    <figure class="pending"><figcaption>Знімок: АВТОПОШУК із кадрами й утриманим каналом</figcaption></figure>
+  </div>
+</section>
+
+<section id="net">
+  <p class="eyebrow">Мережевий перегляд</p>
+  <h2 class="wide">Нове в цій збірці — і тут від тебе потрібен замір</h2>
+  <p>Унизу екрана відкрий розділ <b>МЕРЕЖЕВИЙ ПЕРЕГЛЯД</b>. Увімкни його під час
+  приймання й натисни <b>СКОПІЮВАТИ ПОСИЛАННЯ</b>. Відкрий це посилання на
+  ноутбуці або другому телефоні <b>в тій самій мережі</b> — там будуть спектр,
+  водоспад, список знайдених каналів і кадри.</p>
+  <p>Перевірити треба три речі.</p>
+  <ol class="steps">
+    <li><b>Чи працює при згаслому екрані.</b> Поклади телефон у кишеню на пів
+    години й подивись, чи сторінка досі оновлюється. Застосунок просить Wi-Fi не
+    засинати, але режими економії виробника сильніші за будь-яке прохання, і на
+    різних апаратах це закінчується по-різному. Напиши, який у тебе телефон і
+    що вийшло — це і є замір, якого з-за столу не зробити.</li>
+    <li><b>Скільки з'їдає батарея</b> за виїзд, і чи не починає гальмувати сам
+    приймач.</li>
+    <li><b>Якщо сторінка не відкривається</b> — глянь на рядок «глядачів було».
+    Нуль означає, що сервер на телефоні піднявся, але ніхто до нього не дійшов:
+    порт слухає, а не пускає мережа. Гостьовий Wi-Fi часто забороняє пристроям
+    бачити одне одного.</li>
+  </ol>
+  <div class="warn">
+    <p>Сервер працює рівно поки йде приймання. Після <b>СТОП</b>, від'єднаної
+    плати або виходу із застосунку сторінка чесно скаже, що зв'язок утрачено.</p>
+    <p style="margin-top:10px">Посилання містить ключ, і без нього сторінка не
+    віддасть нічого. Але з'єднання через звичайний HTTP не шифрується — тож це
+    <b>захист від випадкового глядача, а не від того, хто слухає мережу</b>.
+    У чужій мережі краще не вмикати.</p>
+  </div>
+  <figure class="pending"><figcaption>Знімок: телефон із посиланням і та сама сцена в браузері ноутбука</figcaption></figure>
+</section>
+
+<section id="errors">
+  <p class="eyebrow">Коли щось не так</p>
+  <h2>Застосунок навмисно каже, коли винен не він</h2>
+
+  <div class="err">
+    <code>потік 24% — доходить 59 блоків із 244</code>
+    <p>Телефон не встигає читати дані через USB. Трапляється на цілком сучасних
+    апаратах і налаштуваннями застосунку не лікується. Спробуй інший кабель;
+    якщо не допомогло — інший телефон. І обов'язково напиши модель: саме це
+    зараз і вивчається.</p>
+  </div>
+
+  <div class="err">
+    <code>ПОТІК СТОЇТЬ 7 с · покази нижче застигли · піднімаю сам</code>
+    <p>Плата перестала віддавати дані, і всі показники під цим рядком застигли
+    на останньому значенні. Це окреме повідомлення з'явилось тому, що раніше
+    така зупинка виглядала як звичайне перевантаження —
+    <span class="mono">АЦП 100%, рівень 127</span>, — і крутити там VGA було
+    безглуздо: плата вже нічого не передавала, міряти не було чого. Застосунок
+    тричі пробує підняти потік сам і подає звук.</p>
+  </div>
+
+  <div class="err">
+    <code>гребінка й захоплення недійсні · зменшіть VGA</code>
+    <p>Перетворювач дійшов до межі. Усі показники нижче цього рядка зараз
+    недійсні — дивитись на них немає сенсу, поки не зменшиш підсилення.</p>
+  </div>
+
+  <div class="err">
+    <code>Плата не повернулася з режиму PortaPack</code>
+    <p>Зачекай ще секунд десять, перш ніж перетикати кабель. Інколи плата
+    повертається в робочий режим довше, ніж застосунок чекає на відповідь.</p>
+  </div>
+
+  <div class="err">
+    <code>ПРИСТРОЇ НА ШИНІ</code>
+    <p>Якщо там, окрім <span class="mono">HackRF One</span>, є хаб, перехідник
+    чи мережева карта — під'єднай плату прямо до телефона. Хаб ділить між
+    пристроями і пропускну здатність, і живлення, а HackRF потребує і того,
+    і того.</p>
+  </div>
+  <figure class="pending"><figcaption>Знімок: червоні рядки помилок і рядок ПРИСТРОЇ НА ШИНІ</figcaption></figure>
+</section>
+
+<section>
+  <p class="eyebrow">Діагностика</p>
+  <h2 class="wide">Знімок показує одну мить, а відповідь зазвичай у тому, що змінювалось</h2>
+  <p>Унизу екрана відкрий <b>ДІАГНОСТИКА ▸</b> і натисни
+  <b>СКОПІЮВАТИ ДІАГНОСТИКУ</b>. У буфер ляже довгий текст: модель телефона,
+  стан плати, потік, декодер — і таблиця за останні дві хвилини, з новим рядком
+  кожні пів секунди.</p>
+  <p>Надсилай саме цей текст, а не знімок екрана. Знімок показує одну мить.
+  Таблиця показує, як числа рухались перед тим, як усе пішло не так, — і саме
+  це зазвичай і є відповіддю.</p>
+  <p><b>Сіра кнопка не означає поломку.</b> Вона стає жовтою тільки тоді, коли
+  вже є що копіювати. Поки приймач не пропрацював хвилину без перерви, кнопка
+  сіра, а поруч іде відлік — «ще 43 с». Це не налаштування, воно нічого не
+  вмикає: часовий ряд збирається сам увесь час, поки йде картинка.</p>
+  <p>Якщо плату від'єднали або потік зупинився, відлік почнеться заново — бо
+  хвилина з двох уривків по пів хвилини хвилиною не є. Але вже зібране
+  нікуди не дівається: секунди перед самою зупинкою показують стан системи
+  безпосередньо перед збоєм, і кнопка їх віддасть. У шапці звіту видно, чи ряд
+  про «зараз», чи про те, що було до зупинки.</p>
+  <div class="warn">
+    <p>Якщо приймач <b>узагалі не запускається</b>, кнопка каже
+    <b>СКОПІЮВАТИ СТАН</b>, а поруч — «без ряду». Все одно натисни й надішли:
+    там перелік пристроїв на шині, стан плати, підсилення й журнал, а це саме
+    те, що потрібно, коли нічого не йде.</p>
+  </div>
+  <figure class="pending"><figcaption>Знімок: кнопка діагностики у двох станах — сіра з відліком і жовта</figcaption></figure>
+</section>
+
+<section>
+  <p class="eyebrow">Чого свідомо ще немає</p>
+  <h2>Дечого бракує навмисно, і це не вада</h2>
+  <div class="cards">
+    <div class="card">
+      <h3>КОЛІР — ЛИШЕ УВІМК/ВИМК</h3>
+      <p>Кнопки КОЛІР і Ч-Б на сторінці відео. Ручне налаштування відтінку й
+      насиченості прибрано з бети, щоб не захаращувати екран. Повернемо, якщо
+      його бракуватиме.</p>
+    </div>
+    <div class="card">
+      <h3>НЕСТАНДАРТНА РЯДКОВА</h3>
+      <p>Камери з нестандартною рядковою частотою знаходяться, але картинка
+      може лягти обрізаною. Це відоме обмеження, і робота над ним попереду.</p>
+    </div>
+    <div class="card">
+      <h3>ЗВУК</h3>
+      <p>Іде потоком будильника. Через це гучність крутиться кнопками телефона
+      просто в застосунку, не виходячи в налаштування.</p>
+    </div>
+    <div class="card">
+      <h3>КЛЮЧ ПРИ ПЕРШОМУ ЗАПУСКУ</h3>
+      <p>Ключ приходить разом зі збіркою й дійсний 48 годин на активацію.
+      Активував — далі працює, і вікно вже ні до чого. Не встиг — попроси новий,
+      це одна кнопка з мого боку.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">Що нового</p>
+  <h2 class="wide">Три зміни, і кожну варто перевірити саме тому, що було не так раніше</h2>
+  <div class="cards">
+    <div class="card">
+      <h3>ПЕРЕПІДКЛЮЧИТИ</h3>
+      <p>Кнопка більше не ставить повторні натискання в чергу. Раніше вона не
+      показувала жодної реакції, тож її тиснули ще і ще — а кожне натискання
+      додавало ще пів секунди очікування й робило відновлення повільнішим.
+      Тепер повторне каже «перепідключення вже триває» і нічого не додає.</p>
+    </div>
+    <div class="card">
+      <h3>ЧАСТКА ПОТОКУ</h3>
+      <p>Рядок більше не показує 100% там, де потоку немає взагалі. Тепер так і
+      пише: «потоку немає». Раніше у звіті з мертвою платою стояла бадьора
+      сотня, і саме за цим рядком питають, чи йдуть дані.</p>
+    </div>
+    <div class="card">
+      <h3>ЗНАЙДЕНЕ ВІДЕО НЕ БЛИМАЄ</h3>
+      <p>Канал тримається в списку, навіть коли сигнал просів. Якщо в тебе є
+      передавач на межі чутності — саме на ньому це й цікаво перевірити:
+      чи лишається знахідка в списку, поки ти ходиш з антеною, і чи оновлюється
+      картинка.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">Зворотний зв'язок</p>
+  <h2>Найцінніше — те, що розійшлось з очікуванням</h2>
+  <ol class="steps">
+    <li><b>Інтерфейс.</b> Що незрозуміло з першого погляду. Де ти очікував
+    знайти кнопку й не знайшов. Який напис ти зрозумів не так, як було
+    задумано. Саме заради цього збірка в тебе й опинилась.</li>
+    <li><b>Чи знайшов застосунок твій передавач</b> — і з якої відстані, з якою
+    антеною, за якої потужності.</li>
+    <li><b>Чи збіглося те, що показує застосунок, із тим, що ти бачиш на
+    звичайному приймачі.</b> Якщо розійшлось — напиши, що саме показали обидва.
+    Це найцінніше повідомлення з усіх.</li>
+    <li><b>Що дратує. Серйозно.</b> Кнопка не там, текст задовгий, щось блимає.
+    Половина зробленого тут з'явилась саме з таких зауважень.</li>
+  </ol>
+</section>
+
+<section class="cta">
+  <p class="eyebrow">Куди писати</p>
+  <h2>Збірка, діагностика й уся розмова — в одному місці</h2>
+  <p style="margin:0 auto 26px; color:var(--dim)">Там лежить застосунок, туди
+  надсилай діагностику й зауваження, там виходять нові версії. Те саме
+  посилання є і в самому застосунку, у розділі ПРО ПРОГРАМУ.</p>
+  <a class="btn" href="https://t.me/mammoth_forge">t.me/mammoth_forge</a>
+</section>
+
+</main>
+
+<footer>
+  <div class="foot">
+    <img src="assets/logo-512.png" alt="">
+    <span>SYCH AIR · SYCH FPV SCANNER · версія 0.3.0-beta</span>
+    <span class="sig">Зроблено древнім мамутом у власній кузні</span>
+    <a href="https://t.me/mammoth_forge">t.me/mammoth_forge</a>
+  </div>
+</footer>
+
+</body>
+</html>
