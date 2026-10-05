@@ -3,5 +3,8 @@
   "branch": "claude/cloud-session-question-a8lw31",
   "acquired_at": "2026-10-05T07:53:04+00:00",
   "expires_at": "2026-10-05T09:53:04+00:00",
-  "head": "96ba710f1af6ed6e80e572e8762ff325ee3b2443"
+  "head": "fcaccfcfb3e5ebb28544108793fd86da987cc69c",
+  "released": true,
+  "released_at": "2026-10-05T07:53:44+00:00",
+  "released_by": "claude-cloud-governance"
 }
