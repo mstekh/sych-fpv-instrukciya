@@ -25,6 +25,25 @@ disagrees with this file, **this file wins**.
 6. **NO LOST CONTEXT.** After meaningful work update `docs/PROJECT_STATE.md` and append an
    entry to `docs/WORKLOG.md` (newest on top) in the same commit.
 
+## 1a. Power outages: push early, push often (owner's rule, 2026-10-10)
+
+Power cuts end sessions without warning: desktops switch off instantly. Work that is not on GitHub is lost.
+
+- **Commit and push at least every 15 minutes of active work and after every finished step** (a file written,
+  a fix made, a test passing), unfinished intermediate states included. A `WIP:` commit message is fine.
+- Push to the branch you work on. If that branch must stay working (it is deployed or released from, or it is
+  protected), push intermediate states to `wip/<host>-<YYYY-MM-DD>` and merge when the work is done.
+- Stage only the files you changed: never sweep the user's uncommitted work into your commit with `git add -A`.
+  No secrets: the hooks scan for them.
+- Long jobs (builds, generations, experiments, data runs) write results and logs into the repository
+  incrementally and push them as they appear, not once at the end.
+- After an outage: `git fetch`, compare with the remote, continue from what was pushed. The same agent resumes
+  its own live lock with `project_guard.py start`; a lock left by a dead session is taken over only after it
+  expires (`start --take-stale`) and `status` shows no newer pushes.
+- Before a reply to the human that ends a piece of work: `git status` is clean and `git log @{u}..` is empty.
+- This is the owner's standing permission to push working and `wip/*` branches during any session. It does not
+  allow `--force`, history rewrites or pushing to a branch someone else holds the lock for.
+
 ## 2. Forbidden without explicit, per-case human approval
 
 - `git reset --hard`, `git clean -f*`, `git checkout -- .`/`git restore .` over others' work,

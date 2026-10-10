@@ -2,6 +2,10 @@
 
 Новіші записи — зверху.
 
+## 2026-10-10 — claude (DESKTOP-KE7V1S9): power-outage push rule
+
+- Added the owner's rule "push early, push often" (power cuts end sessions). No code changes.
+
 ## 2026-10-05 — claude-cloud-governance — аудит і governance-документи
 
 - Аудит (лише читання) від `96ba710f1af6`: дерево, README, `index.html`, `git log`.
